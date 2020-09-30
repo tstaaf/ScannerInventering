@@ -23,7 +23,7 @@
         </Viewbox>
         <Viewbox Grid.Row="1" Stretch="Uniform">
             <StackPanel Orientation="Horizontal" Margin="10">
-                <Label Content="Scanner Port:      " Margin="10"/>
+                <Label Content="Scanner Port:       " Margin="10"/>
                 <TextBox Width="500" Text="{Binding Source={x:Static p:Settings.Default}, Path=ScannerPort, Mode=TwoWay}" FontSize="25"/>
             </StackPanel>
         </Viewbox>

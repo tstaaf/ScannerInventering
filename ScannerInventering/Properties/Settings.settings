@@ -9,7 +9,7 @@
       <Value Profile="(Default)">C:\Users\timmy.staaf\Desktop\Invent\Invent.txt</Value>
     </Setting>
     <Setting Name="ScannerPort" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">0</Value>
+      <Value Profile="(Default)">51000</Value>
     </Setting>
   </Settings>
 </SettingsFile>

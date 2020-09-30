@@ -10,6 +10,6 @@ namespace ScannerInventering.Classes
     {
         public string Artikelnummer { get; set; }
         public string Artikelnamn { get; set; }
-        public int Antal { get; set; }
+        public string Antal { get; set; }
     }
 }

@@ -49,7 +49,7 @@ namespace ScannerInventering.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("51000")]
         public int ScannerPort {
             get {
                 return ((int)(this["ScannerPort"]));

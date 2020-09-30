@@ -25,6 +25,7 @@ namespace ScannerInventering
     {
         List<Artikel> artiklar = new List<Artikel>();
         bool start;
+        bool AsyncStarted = false;
         public MainWindow()
         {
             InitializeComponent();
@@ -32,122 +33,155 @@ namespace ScannerInventering
             prodDataGrid.ItemsSource = artiklar;
         }
 
-        //async void AsyncConnect()
-        //{
-        //    string IP = "127.0.0.1";
-        //    int Port = 9100;
-        //    int timeout = 5000;
-
-        //    using (var client = new TcpClient())
-        //        using(var reader = new StreamReader(stream))
-        //    {
-        //        await client.ConnectAsync(IP, Port);
-        //        var stream = client.GetStream();
-        //        stream.ReadTimeout = timeout;
-
-        //        string response = await reader.ReadLineAsync();
-        //        Console.WriteLine(response);
-        //    }
-        //}
-
         async void ScannerConnect()
         {
-            try
+            AsyncStarted = true;
+            start = true;
+            //string IP = "127.0.0.1";
+            string IP = "10.46.56.38";
+
+            //int Port = 51000;
+
+            //string IP = Properties.Settings.Default.ScannerIP;
+            int Port = Properties.Settings.Default.ScannerPort;
+            TcpClient client;
+            //TcpClient client2;
+
+
+            while (start)
             {
-                start = true;
-                string IP = "10.46.56.38";
-                
-                int Port = 51000;
-
-                //string IP = Properties.Settings.Default.ScannerIP;
-                //int Port = 9100;
-
-                
-                while (start)
+                try
                 {
-                    TcpClient client = new TcpClient();
+                    client = new TcpClient();
+                    
                     await client.ConnectAsync(IP, Port);
+                    Console.WriteLine("Client connected.");
 
                     NetworkStream stream = client.GetStream();
-                    Console.WriteLine("Waiting for scan..");
+                    Console.WriteLine("Waiting for article scan..");
 
                     byte[] data = new byte[256];
                     string response = string.Empty;
                     int bytes = await stream.ReadAsync(data, 0, data.Length);
-                    response = Encoding.ASCII.GetString(data, 0, bytes);
+                    response = Encoding.Default.GetString(data, 0, bytes);
                     if (response.Contains("Welcome"))
                     {
-                        bytes =  await stream.ReadAsync(data, 0, data.Length);
-                        response = Encoding.ASCII.GetString(data, 0, bytes);
+                        bytes = await stream.ReadAsync(data, 0, data.Length);
+                        response = Encoding.Default.GetString(data, 0, bytes);
                     }
+                    response = response.Replace("\u0002", "");
+                    response = response.Replace("\u0003", "");
                     var resSplit = response.Split(new[] { (char)32 }, 2);
                     Console.WriteLine("Recieved: {0}", response);
-
-                    NetworkStream stream2 = client.GetStream();
-                    Console.WriteLine("Waiting for scan..");
+                    statusBar.Text = response;
+                    
+                    stream = client.GetStream();
+                    Console.WriteLine("Waiting for quantity scan..");
 
                     byte[] data2 = new byte[256];
                     string response2 = string.Empty;
                     int bytes2 = await stream.ReadAsync(data2, 0, data2.Length);
                     response2 = Encoding.ASCII.GetString(data2, 0, bytes2);
+                    if (response2.Contains("Welcome"))
+                    {
+                        bytes2 = await stream.ReadAsync(data2, 0, data2.Length);
+                        response2 = Encoding.Default.GetString(data2, 0, bytes2);
+                    }
 
                     Console.WriteLine("Recieved: {0}", response2);
-
-                    Artikel artikel = new Artikel
+                    statusBar.Text = response2;
+                    if (response2.Contains(" "))
                     {
-                        Artikelnummer = resSplit[0],
-                        Artikelnamn = resSplit[1],
-                        Antal = int.Parse(response2)
-                    };
+                        response2 = "";
+                    }
+                    response2 = response2.Replace("\u0002", "");
+                    response2 = response2.Replace("\u0003", "");
+                    try
+                    {
+                        Artikel artikel = new Artikel
+                        {
+                            Artikelnummer = resSplit[0],
+                            Artikelnamn = resSplit[1],
+                            Antal = response2
+                        };
+                        Console.WriteLine("Adding article.");
+                        artiklar.Add(artikel);
+                        prodDataGrid.ItemsSource = null;
+                        prodDataGrid.ItemsSource = artiklar;
+                    }
+                    catch (Exception err)
+                    {
+                        statusBar.Text = "Fel vid tilläggning av artikel.";
+                    }
 
-                    artiklar.Add(artikel);
-                    prodDataGrid.ItemsSource = null;
-                    prodDataGrid.ItemsSource = artiklar;
+                    prodDataGrid.ScrollIntoView(prodDataGrid.Items.GetItemAt(prodDataGrid.Items.Count-1));
+                    Console.WriteLine("Cycle done, closing stream.");
+
                     stream.Close();
-                    client.Close();
+                    Console.WriteLine("Stream2 closed");
+                    //stream2.Close();
+                    client.Client.Disconnect(true);
+                    Console.WriteLine("Client2 closed");
                 }
-                
-                
+                catch (Exception err)
+                {
+                    Console.WriteLine("Fel med skanner: " + err.Message);
+                }
+
             }
-            catch (Exception err)
-            {
-                MessageBox.Show("Fel med skanner: " + (char)10 + err.Message, "Något gick fel, klicka på \"Start\" för att fortsätta.");
-            }
+            AsyncStarted = false;
+
         }
 
         private void startBtn_Click(object sender, RoutedEventArgs e)
         {
-            ScannerConnect();
-            startBtn.IsEnabled = false;
-            stopBtn.IsEnabled = true;
-            //AsyncConnect();
+            if (AsyncStarted==false)
+            {
+                ScannerConnect();
+                startBtn.IsEnabled = false;
+                stopBtn.IsEnabled = true;
+            }
+            else
+            {
+                statusBar.Text = "Skanna in artikel för att möjliggöra återstart.";
+            }
         }
 
         private void stopBtn_Click(object sender, RoutedEventArgs e)
         {
             start = false;
-            MessageBox.Show("Slutför en sista skanning innan du klickar på \"Start\" på nytt.", "Varning", MessageBoxButton.OK, MessageBoxImage.Warning);
+            statusBar.Text = "Slutför en sista skanning innan du klickar på \"Start\" på nytt.";
             startBtn.IsEnabled = true;
             stopBtn.IsEnabled = false;
         }
 
         private void doneBtn_Click(object sender, RoutedEventArgs e)
         {
-            var filepath = Properties.Settings.Default.InventFilePath;
-            using (StreamWriter w = File.CreateText(filepath))
+            var filename = DateTime.Now.ToString("MMddyyyy-HHmmss") + ".txt";
+            var filepath = Properties.Settings.Default.InventFilePath + filename;
+            try
             {
-                w.WriteLine("01");
-                w.WriteLine("#12219;" + signTextBox.Text);
-                w.WriteLine("#12283;" + lagerTextBox.Text);
-                w.WriteLine("11");
-                foreach (var art in artiklar)
+                using (StreamWriter w = File.CreateText(filepath))
                 {
-                    w.WriteLine("#12401;" + art.Artikelnummer);
-                    w.WriteLine("#12441;" + art.Antal);
+                    w.WriteLine("01");
+                    w.WriteLine("#12219;" + signTextBox.Text);
+                    w.WriteLine("#12283;" + lagerTextBox.Text);
                     w.WriteLine("11");
-                }
-            };
-            MessageBox.Show("Fil sparad på plats: " + filepath + ".");
+                    foreach (var art in artiklar)
+                    {
+                        w.WriteLine("#12401;" + art.Artikelnummer);
+                        w.WriteLine("#12441;" + art.Antal);
+                        w.WriteLine("11");
+                    }
+                };
+                MessageBox.Show("Fil sparad på plats: " + filepath + ".");
+            }
+            catch(Exception err)
+            {
+                MessageBox.Show(err.Message, "Fel vid sparning av fil");
+            }
+            
+            
         }
 
         private void deleteBtn_Click(object sender, RoutedEventArgs e)
