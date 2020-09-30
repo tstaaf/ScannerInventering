@@ -25,7 +25,7 @@ namespace ScannerInventering.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("10.46.56.38")]
         public string ScannerIP {
             get {
                 return ((string)(this["ScannerIP"]));
@@ -37,7 +37,7 @@ namespace ScannerInventering.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\timmy.staaf\\Desktop\\Invent\\Invent.txt")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Invent\\")]
         public string InventFilePath {
             get {
                 return ((string)(this["InventFilePath"]));

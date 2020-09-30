@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="ScannerIP" Type="System.String" Scope="User">
-      <Value Profile="(Default)">127.0.0.1</Value>
+      <Value Profile="(Default)">10.46.56.38</Value>
     </Setting>
     <Setting Name="InventFilePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">C:\Users\timmy.staaf\Desktop\Invent\Invent.txt</Value>
+      <Value Profile="(Default)">C:\Invent\</Value>
     </Setting>
     <Setting Name="ScannerPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">51000</Value>

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,20 +45,16 @@ namespace ScannerInventering
 
             //string IP = Properties.Settings.Default.ScannerIP;
             int Port = Properties.Settings.Default.ScannerPort;
-            TcpClient client;
-            //TcpClient client2;
+            TcpClient client = new TcpClient();
 
+            await client.ConnectAsync(IP, Port);
+            Console.WriteLine("Client connected.");
+            NetworkStream stream = client.GetStream();
 
             while (start)
             {
                 try
                 {
-                    client = new TcpClient();
-                    
-                    await client.ConnectAsync(IP, Port);
-                    Console.WriteLine("Client connected.");
-
-                    NetworkStream stream = client.GetStream();
                     Console.WriteLine("Waiting for article scan..");
 
                     byte[] data = new byte[256];
@@ -73,7 +70,7 @@ namespace ScannerInventering
                     response = response.Replace("\u0003", "");
                     var resSplit = response.Split(new[] { (char)32 }, 2);
                     Console.WriteLine("Recieved: {0}", response);
-                    statusBar.Text = response;
+                    statusBar.Text = "Artikel: " + response;
                     
                     stream = client.GetStream();
                     Console.WriteLine("Waiting for quantity scan..");
@@ -89,7 +86,7 @@ namespace ScannerInventering
                     }
 
                     Console.WriteLine("Recieved: {0}", response2);
-                    statusBar.Text = response2;
+                    statusBar.Text = "Antal: " + response2;
                     if (response2.Contains(" "))
                     {
                         response2 = "";
@@ -112,24 +109,26 @@ namespace ScannerInventering
                     catch (Exception err)
                     {
                         statusBar.Text = "Fel vid tilläggning av artikel.";
+                        SystemSounds.Beep.Play();
                     }
 
                     prodDataGrid.ScrollIntoView(prodDataGrid.Items.GetItemAt(prodDataGrid.Items.Count-1));
                     Console.WriteLine("Cycle done, closing stream.");
 
-                    stream.Close();
-                    Console.WriteLine("Stream2 closed");
-                    //stream2.Close();
-                    client.Client.Disconnect(true);
-                    Console.WriteLine("Client2 closed");
                 }
                 catch (Exception err)
                 {
-                    Console.WriteLine("Fel med skanner: " + err.Message);
+                    statusBar.Text = "Fel med skanner. Tryck på start för att fortsätta.";
+                    start = false;
+                    SystemSounds.Hand.Play();
                 }
 
             }
             AsyncStarted = false;
+            stream.Close();
+            client.Dispose();
+            startBtn.IsEnabled = true;
+            stopBtn.IsEnabled = false;
 
         }
 
@@ -144,6 +143,7 @@ namespace ScannerInventering
             else
             {
                 statusBar.Text = "Skanna in artikel för att möjliggöra återstart.";
+                SystemSounds.Hand.Play();
             }
         }
 
@@ -179,6 +179,7 @@ namespace ScannerInventering
             catch(Exception err)
             {
                 MessageBox.Show(err.Message, "Fel vid sparning av fil");
+                SystemSounds.Hand.Play();
             }
             
             
@@ -195,6 +196,7 @@ namespace ScannerInventering
             catch(Exception err)
             {
                 MessageBox.Show(err.Message);
+                SystemSounds.Hand.Play();
             }
         }
 
